@@ -22,7 +22,6 @@ def get_weather(city: str) -> str:
 
     try:    
         api_key = os.getenv("Open_Weather_API_KEY")
-        print(api_key)
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city},IN&appid={api_key}&units=metric"
         
         response = requests.get(url)
