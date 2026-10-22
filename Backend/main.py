@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-# from fastapi.middleware import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import SystemMessage,HumanMessage,AIMessage,ToolMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_mistralai import ChatMistralAI
@@ -20,7 +20,17 @@ class Need_Tool(BaseModel):
 load_dotenv()
 
 app = FastAPI()
-# app.add_middleware(CORSMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "https://mcp-amplework-4.onrender.com",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 llm = ChatGroq(model='openai/gpt-oss-120b' , api_key=os.getenv('GROQ_API_KEY')) 
 
 @app.get("/")
