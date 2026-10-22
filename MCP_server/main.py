@@ -12,6 +12,8 @@ mcp = FastMCP(
     "my_mcp",
     json_response=True,
     stateless_http=PRODUCTION,
+    host='0.0.0.0',
+    port=1000
 )
 
 @mcp.tool()
