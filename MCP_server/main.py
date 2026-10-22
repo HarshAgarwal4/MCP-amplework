@@ -6,7 +6,7 @@ from tavily import TavilyClient
 
 load_dotenv()
 
-PRODUCTION = os.getenv("PRODUCTION", "false").lower() == "true"
+PRODUCTION = os.getenv('production') == "true"
 
 mcp = FastMCP(
     "my_mcp",
@@ -69,11 +69,6 @@ def get_news(city: str) -> str:
         return f"Error in fetching news due to some tchnical reason"
 
 if __name__ == "__main__":
-    if PRODUCTION:
-        # Serverless deployment: expose the ASGI application
-        app = mcp.streamable_http_app()
-    else:
-        # Local development: start the HTTP server
-        mcp.run(
-            transport="streamable-http",
-        )
+    mcp.run(
+        transport="streamable-http",
+    )
