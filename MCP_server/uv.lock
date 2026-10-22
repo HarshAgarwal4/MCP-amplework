@@ -612,6 +612,7 @@ dependencies = [
     { name = "langchain-core" },
     { name = "mcp", extra = ["cli"] },
     { name = "tavily-python" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
@@ -619,6 +620,7 @@ requires-dist = [
     { name = "langchain-core", specifier = ">=1.6.13" },
     { name = "mcp", extras = ["cli"], specifier = "<2" },
     { name = "tavily-python", specifier = ">=0.8.5" },
+    { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 
 [[package]]

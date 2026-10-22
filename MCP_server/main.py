@@ -69,14 +69,6 @@ def get_news(city: str) -> str:
         return f"Error in fetching news due to some tchnical reason"
 
 if __name__ == "__main__":
-    if PRODUCTION:
-        port=10000
-        mcp.run(
-            transport="streamable-http",
-            host="0.0.0.0",
-            port=port,
-        )
-    else:
         mcp.run(
             transport="streamable-http",
         )
