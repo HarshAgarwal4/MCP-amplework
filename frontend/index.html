@@ -264,7 +264,7 @@
 
   <script>
     // Change this if your FastAPI backend uses another host or port.
-    const API_URL = "https://mcp-amplework.vercel.app/chat";
+    const API_URL = "http://localhost:8001/chat";
 
     const chat = document.getElementById("chat");
     const chatScroll = document.getElementById("chatScroll");
@@ -274,6 +274,16 @@
     const sendBtn = document.getElementById("sendBtn");
     const toast = document.getElementById("toast");
     let isSending = false;
+    const STORAGE_KEY = "ample_chat_history";
+    let chatHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+    function saveLocalHistory() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+      } catch (e) {
+        console.error("Failed to save history locally", e);
+      }
+    }
 
     const icons = {
       user: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
@@ -291,7 +301,7 @@
       chatScroll.scrollTop = chatScroll.scrollHeight;
     }
 
-    function addMessage(role, text) {
+    function addMessage(role, text, save = true) {
       if (welcome && welcome.isConnected) welcome.remove();
 
       const wrapper = document.createElement("div");
@@ -316,6 +326,10 @@
       wrapper.append(avatar, body);
       chat.appendChild(wrapper);
       scrollToBottom();
+      if (save) {
+        chatHistory.push({ role, content: text });
+        saveLocalHistory();
+      }
       return wrapper;
     }
 
@@ -364,6 +378,7 @@
       const message = text.trim();
       if (!message || isSending) return;
 
+      const priorHistory = [...chatHistory];
       addMessage("user", message);
       input.value = "";
       resizeInput();
@@ -374,7 +389,7 @@
         const response = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ message, history: priorHistory })
         });
 
         const typing = document.getElementById("typingIndicator");
@@ -397,13 +412,15 @@
       } catch (error) {
         const typing = document.getElementById("typingIndicator");
         if (typing) typing.remove();
+        chatHistory.pop();
+        saveLocalHistory();
 
         let explanation = error.message || "Unknown network error.";
         if (error instanceof TypeError) {
           explanation = "Could not connect to the backend. Check that FastAPI is running at " + API_URL +
             " and that CORS allows this page's origin.";
         }
-        addMessage("assistant", "I couldn't complete that request.\n\n" + explanation);
+        addMessage("assistant", "I couldn't complete that request.\n\n" + explanation, false);
         showToast("Connection or API error");
         console.error("Chat request failed:", error);
       } finally {
@@ -418,6 +435,8 @@
     }
 
     function resetChat() {
+      chatHistory = [];
+      localStorage.removeItem(STORAGE_KEY);
       chat.innerHTML = "";
       const welcomeBlock = document.createElement("div");
       welcomeBlock.className = "welcome";
@@ -458,6 +477,10 @@
     document.getElementById("newChat").addEventListener("click", resetChat);
     document.getElementById("mobileNew").addEventListener("click", resetChat);
     document.getElementById("clearChat").addEventListener("click", resetChat);
+
+    if (chatHistory && chatHistory.length > 0) {
+      chatHistory.forEach(msg => addMessage(msg.role, msg.content, false));
+    }
   </script>
 </body>
 </html>

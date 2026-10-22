@@ -12,8 +12,8 @@ mcp = FastMCP(
     "my_mcp",
     json_response=True,
     stateless_http=PRODUCTION,
-    host='0.0.0.0',
-    port=1000
+    host='0.0.0.0' if PRODUCTION else '127.0.0.1',
+    port=8000
 )
 
 @mcp.tool()
@@ -36,39 +36,50 @@ def get_weather(city: str) -> str:
         return "Error: {data.get('message', 'Could not fetch weather')}"
 
 @mcp.tool()
-def get_news(city: str) -> str:
-    """Get latest news about a city"""
+def web_search(query: str) -> str:
+    """Search the web for any topic, including current information, latest updates,
+    recent news, technical documentation, people, companies, and general research."""
 
     try:
-        tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-        
-        response = tavily_client.search(
-            query=f"latest news in {city}",
-            search_depth="basic",
-            max_results=3
+        tavily_client = TavilyClient(
+            api_key=os.getenv("TAVILY_API_KEY")
         )
-        
-        results = response.get("results", [])
-        
-        if not results:
-            return f"No news found for {city}"
-        
-        news_list = []
-        
-        for r in results:
-            title = r.get("title", "No title")
-            url = r.get("url", "")
-            snippet = r.get("content", "")
-            
-            news_list.append(
-                f"- {title}\n  🔗 {url}\n  📝 {snippet[:100]}..."
-            )
-        
-        return f"Latest news in {city}:\n\n" + "\n\n".join(news_list)
-    except Exception as e:
-        print(e)
-        return f"Error in fetching news due to some tchnical reason"
 
+        response = tavily_client.search(
+            query=query,
+            search_depth="advanced",
+            max_results=5,
+            include_answer=True,
+        )
+
+        results = response.get("results", [])
+
+        if not results:
+            return f"No relevant web results found for: {query}"
+
+        output = []
+
+        answer = response.get("answer")
+        if answer:
+            output.append(f"Search summary:\n{answer}")
+
+        for i, result in enumerate(results, start=1):
+            title = result.get("title", "Untitled")
+            url = result.get("url", "")
+            content = result.get("content", "")
+
+            output.append(
+                f"{i}. {title}\n"
+                f"URL: {url}\n"
+                f"Content: {content}"
+            )
+
+        return f"Web search results for '{query}':\n\n" + "\n\n".join(output)
+
+    except Exception as e:
+        print(f"Web search failed: {e}")
+        return "Error: A technical issue prevented the web search."
+    
 if __name__ == "__main__":
         mcp.run(
             transport="streamable-http",
